@@ -129,23 +129,27 @@
 
     spawn();
     loop();
-  // ================================
-// CONTROLES TÁCTILES MÓVIL (OK)
+
+
 // ================================
+// CONTROLES TÁCTILES MÓVIL (FINAL)
+// ================================
+
 canvas.addEventListener("touchstart", (e) => {
   e.preventDefault();
 
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
 
-  // MOVER NAVE
+  // mover nave
   shipX = touch.clientX - rect.left;
 
-  // DISPARAR
+  // disparar
   bullets.push({
     x: shipX,
     y: shipY
   });
+
 }, { passive: false });
 
 canvas.addEventListener("touchmove", (e) => {
@@ -154,9 +158,11 @@ canvas.addEventListener("touchmove", (e) => {
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
 
-  // MOVER NAVE
+  // mover nave
   shipX = touch.clientX - rect.left;
+
 }, { passive: false });
+
   
 </script>
 </body>
