@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Galactic War Pro</title>
+    <style>
+        body { background: #000; color: #0ff; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        canvas { border: 2px solid #333; box-shadow: 0 0 40px #044; background: radial-gradient(circle, #001 0%, #000 100%); }
+        .hud { position: absolute; top: 10px; width: 800px; display: flex; justify-content: space-around; font-size: 24px; text-shadow: 0 0 10px #0ff; }
+    </style>
+</head>
+<body>
+    <div class="hud">
+        <span>PUNTOS: <span id="s">0</span></span>
+        <span>NIVEL: <span id="l">1</span></span>
+    </div>
+    <canvas id="g"></canvas>
+    <p style="color:#444">FLECHAS: Mover | ESPACIO: Fuego | ENTER: Reiniciar</p>
+
+<script>
+    const canvas = document.getElementById("g");
+    const ctx = canvas.getContext("2d");
+    canvas.width = 800; canvas.height = 500;
+
+    // Sonidos
+    const audio = new (window.AudioContext || window.webkitAudioContext)();
+    function beep(f, d, t, v=0.1) {
+        const o = audio.createOscillator(); const g = audio.createGain();
+        o.type = t; o.frequency.value = f; o.connect(g); g.connect(audio.destination);
+        g.gain.setValueAtTime(v, audio.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audio.currentTime+d);
+        o.start(); o.stop(audio.currentTime+d);
+    }
+
+    let score = 0, level = 1, gameOver = false, shake = 0;
+    let player = { x: 400, y: 450 };
+    let bullets = [], aliens = [], particles = [], stars = Array.from({length: 100}, () => ({x: Math.random()*800, y: Math.random()*500, v: Math.random()*2+1}));
+
+    function drawShip(x, y) {
+        ctx.fillStyle = "#0ff";
+        ctx.beginPath(); // Cuerpo
+        ctx.moveTo(x, y-20); ctx.lineTo(x-15, y+10); ctx.lineTo(x+15, y+10); ctx.fill();
+        ctx.fillStyle = "#fff"; // Alas
+        ctx.fillRect(x-20, y, 5, 10); ctx.fillRect(x+15, y, 5, 10);
+        ctx.fillStyle = "#f00"; // Motor
+        ctx.fillRect(x-3, y+10, 6, 5);
+    }
+
+    function drawAlien(x, y, type, color) {
+        ctx.fillStyle = color;
+        ctx.shadowBlur = 10; ctx.shadowColor = color;
+        if(type==0) { // Tipo Escarabajo
+            ctx.fillRect(x, y, 30, 15); ctx.fillRect(x+10, y-5, 10, 5);
+            ctx.fillRect(x-5, y+5, 5, 10); ctx.fillRect(x+30, y+5, 5, 10);
+        } else { // Tipo Puntiagudo
+            ctx.beginPath(); ctx.moveTo(x+15, y+20); ctx.lineTo(x, y); ctx.lineTo(x+30, y); ctx.fill();
+            ctx.fillStyle="#fff"; ctx.fillRect(x+12, y+5, 6, 6);
+        }
+        ctx.shadowBlur = 0;
+    }
+
+    function spawn() {
+        for(let i=0; i<4; i++) {
+            for(let j=0; j<10; j++) {
+                aliens.push({x: 100+j*60, y: 50+i*40, w: 30, h: 20, t: i%2, c: ['#f0f','#0f0','#ff0','#f44'][i], s: 1 + level*0.3});
+            }
+        }
+    }
+
+    const keys = {};
+    window.onkeydown = (e) => { 
+        keys[e.code] = true;
+        if(e.code==="Space" && !gameOver) { 
+            bullets.push({x: player.x, y: player.y-20}); 
+            beep(600, 0.1, 'square', 0.05); 
+        }
+        if(e.code==="Enter" && gameOver) location.reload();
+        if(audio.state === 'suspended') audio.resume();
+    };
+    window.onkeyup = (e) => keys[e.code] = false;
+
+    function loop() {
+        if(gameOver) {
+            ctx.fillStyle = "red"; ctx.font = "50px Impact"; ctx.fillText("MISIÓN FALLIDA", 250, 250);
+            ctx.font = "20px Arial"; ctx.fillText("Pulsa ENTER para reintentar", 280, 300);
+            return requestAnimationFrame(loop);
+        }
+
+        ctx.clearRect(0,0,800,500);
+        if(shake > 0) { ctx.translate(Math.random()*4-2, Math.random()*4-2); shake--; }
+
+        // Estrellas
+        ctx.fillStyle = "#fff";
+        stars.forEach(s => { s.y += s.v; if(s.y>500) s.y=0; ctx.fillRect(s.x, s.y, 1, 1); });
+
+        // Nave
+        if(keys["ArrowLeft"] && player.x > 30) player.x -= 7;
+        if(keys["ArrowRight"] && player.x < 770) player.x += 7;
+        drawShip(player.x, player.y);
+
+        // Balas (Láser)
+        bullets.forEach((b, i) => {
+            b.y -= 12; ctx.fillStyle = "#ff0"; ctx.fillRect(b.x-1, b.y, 3, 15);
+            if(b.y < 0) bullets.splice(i,1);
+        });
+
+        // Aliens
+        let edge = false;
+        aliens.forEach((a, i) => {
+            a.x += a.s;
+            if(a.x > 770 || a.x < 10) edge = true;
+            drawAlien(a.x, a.y, a.t, a.c);
+            if(a.y > 430) gameOver = true;
+
+            bullets.forEach((b, bi) => {
+                if(b.x > a.x && b.x < a.x+30 && b.y > a.y && b.y < a.y+20) {
+                    aliens.splice(i, 1); bullets.splice(bi, 1);
+                    score += 100 * level; shake = 5;
+                    beep(100, 0.2, 'sawtooth');
+                    document.getElementById("s").innerText = score;
+                }
+            });
+        });
+
+        if(edge) aliens.forEach(a => { a.s *= -1.1; a.y += 20; });
+        if(aliens.length === 0) { level++; document.getElementById("l").innerText = level; spawn(); }
+
+        ctx.setTransform(1,0,0,1,0,0);
+        requestAnimationFrame(loop);
+    }
+
+    spawn();
+    loop();
+</script>
+</body>
+</html>
