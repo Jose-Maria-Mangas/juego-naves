@@ -129,6 +129,14 @@
 
     spawn();
     loop();
+    // --- CONTROL TÁCTIL PARA MÓVIL ---
+document.addEventListener("touchstart", e => {
+  shipX = e.touches[0].clientX;
+});
+
+document.addEventListener("touchmove", e => {
+  shipX = e.touches[0].clientX;
+});
 </script>
 </body>
 </html>
