@@ -163,6 +163,23 @@ canvas.addEventListener("touchmove", (e) => {
 
 }, { passive: false });
 
+// ====== CONTROLES MÓVIL (SIMPLE Y FUNCIONA) ======
+canvas.style.touchAction = "none";
+
+canvas.addEventListener("touchstart", function (e) {
+  e.preventDefault();
+  const t = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  shipX = (t.clientX - rect.left) * (canvas.width / rect.width);
+  bullets.push({ x: shipX, y: shipY });
+}, { passive: false });
+
+canvas.addEventListener("touchmove", function (e) {
+  e.preventDefault();
+  const t = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  shipX = (t.clientX - rect.left) * (canvas.width / rect.width);
+}, { passive: false });
   
 </script>
 </body>
