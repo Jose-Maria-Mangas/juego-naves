@@ -129,7 +129,35 @@
 
     spawn();
     loop();
-    
+  // ================================
+// CONTROLES TÁCTILES MÓVIL (OK)
+// ================================
+canvas.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+
+  // MOVER NAVE
+  shipX = touch.clientX - rect.left;
+
+  // DISPARAR
+  bullets.push({
+    x: shipX,
+    y: shipY
+  });
+}, { passive: false });
+
+canvas.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+
+  // MOVER NAVE
+  shipX = touch.clientX - rect.left;
+}, { passive: false });
+  
 </script>
 </body>
 </html>
